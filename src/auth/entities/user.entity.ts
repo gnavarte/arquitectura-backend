@@ -6,7 +6,7 @@ export class User {
     id: string;
 
     @Column('text')
-    fullName: string;
+    name: string;
 
     @Column('text', { unique: true })
     email: string;
