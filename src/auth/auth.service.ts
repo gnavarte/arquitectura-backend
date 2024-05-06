@@ -48,7 +48,11 @@ export class AuthService {
       const token = this.getJwtToken(payload);
       return { user, token };
     } catch (error) {
-      throw new InternalServerErrorException();
+      if (error.status === 401) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException();
+      }
     }
   }
   
