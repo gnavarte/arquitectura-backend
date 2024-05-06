@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -31,7 +31,7 @@ export class AuthService {
       if (error.code === '23505') {
         throw new BadRequestException('User already exists');
       } else {
-        throw new BadRequestException('Invalid data provided');
+        throw new InternalServerErrorException();
       }
     }
   }
