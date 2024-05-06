@@ -38,22 +38,16 @@ export class AuthService {
 
   async login(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'password'],
-    });    
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
+    const user = await this.userRepository.findOne({ where: { email }, select: ['id', 'email', 'password'] });    
+    const isValidCredentials = user && await bcrypt.compare(password, user.password);
+    if (!isValidCredentials) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const payload: JwtPayload = { id: user.id };
     const token = this.getJwtToken(payload);
     return { user, token };
   }
-
+  
   private getJwtToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload);
   }
