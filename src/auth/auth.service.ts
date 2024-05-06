@@ -16,9 +16,9 @@ export class AuthService {
   ) {}
 
   async signup(createUserDto: CreateUserDto) {
-    const { password, ...rest } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
     try {
+      const { password, ...rest } = createUserDto;
+      const hashedPassword = await bcrypt.hash(password, 10);
       const user = await this.userRepository.save({
         ...rest,
         password: hashedPassword,
@@ -37,15 +37,22 @@ export class AuthService {
   }
 
   async login(loginUserDto: LoginUserDto) {
-    const { email, password } = loginUserDto;
-    const user = await this.userRepository.findOne({ where: { email }, select: ['id', 'email', 'password'] });    
-    const isValidCredentials = user && await bcrypt.compare(password, user.password);
-    if (!isValidCredentials) {
-      throw new UnauthorizedException('Invalid credentials');
+    try {
+      const { email, password } = loginUserDto;
+      const user = await this.userRepository.findOne({ where: { email }, select: ['id', 'email', 'password'] });    
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      const isValidCredentials = await bcrypt.compare(password, user.password);
+      if (!isValidCredentials) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      const payload: JwtPayload = { id: user.id };
+      const token = this.getJwtToken(payload);
+      return { user, token };
+    } catch (error) {
+      throw new InternalServerErrorException();
     }
-    const payload: JwtPayload = { id: user.id };
-    const token = this.getJwtToken(payload);
-    return { user, token };
   }
   
   private getJwtToken(payload: JwtPayload): string {
