@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,18 +17,22 @@ export class AuthService {
 
   async register(createUserDto: CreateUserDto) {
     const { password, ...rest } = createUserDto;
+    const hashedPassword = await bcrypt.hash(password, 10);
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
       const user = await this.userRepository.save({
         ...rest,
         password: hashedPassword,
       });
-      delete user.password;
       const payload: JwtPayload = { id: user.id };
       const token = this.getJwtToken(payload);
+      delete user.password;
       return { user, token };
     } catch (error) {
-      this.handleError(error);
+      if (error.code === '23505') {
+        throw new BadRequestException('User already exists');
+      } else {
+        throw new BadRequestException('Invalid data provided');
+      }
     }
   }
 
@@ -52,13 +56,5 @@ export class AuthService {
 
   private getJwtToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload);
-  }
-  
-  private handleError(error: any) {
-    if (error.code === '23505') {
-      throw new BadRequestException('User already exists');
-    } else {
-      throw new InternalServerErrorException();
-    }
   }
 }
