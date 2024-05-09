@@ -9,4 +9,14 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('iot-data')
+  async getIotData(): Promise<any> {
+    return this.appService.getIotData();
+  }
+
+  @Get('machine-learning-data')
+  async getMachineLearningData(): Promise<any> {
+    return this.appService.getMachineLearningData();
+  }
 }
